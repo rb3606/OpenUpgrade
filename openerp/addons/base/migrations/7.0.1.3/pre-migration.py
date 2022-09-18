@@ -24,6 +24,7 @@
 
 from openupgrade import openupgrade
 from openerp.addons.openupgrade_records.lib import apriori
+from datetime import datetime
 
 obsolete_modules = (
     'base_tools',
@@ -215,9 +216,50 @@ def remove_obsolete_modules(cr, obsolete_modules):
         WHERE name in %s AND state <> 'uninstalled'
         """, (obsolete_modules,))
 
+def run_lovefurniture(cr):
+    #delete view
+    cr.execute("delete from ir_ui_view_sc where user_id not in (select id from res_users)")
+    cr.execute("delete  from ir_ui_view_sc where res_id = 108 and user_id = 1")
+    
+    #migrating all missing res.users reference to 1 
+    qry = "select model,name from ir_model_fields where ttype ='many2one' and relation = 'res.users'  and replace(model,'.','_') in ( SELECT tablename FROM pg_catalog.pg_tables) and name in (SELECT column_name  FROM information_schema.columns WHERE table_name=replace(model,'.','_') and column_name=name)" 
+    cr.execute(qry)
+    for row in cr.fetchall():
+        model = row[0].replace('.','_')
+        name = row[1]
+        query = "select id,%s from  %s where %s not in (select id from res_users)" %(name,model,name)
+        cr.execute(query)
+        for res in cr.fetchall():
+            qr  = "UPDATE %s SET %s = 1 WHERE id = %s" %(model,name,res[0])
+            cr.execute(qr)
+
+    #migrating all missing res.partner to new partner
+    qry = "select model,name from ir_model_fields where ttype ='many2one' and relation = 'res.partner'  and replace(model,'.','_') in ( SELECT tablename FROM pg_catalog.pg_tables) and name in (SELECT column_name  FROM information_schema.columns WHERE table_name=replace(model,'.','_') and column_name=name)" 
+    cr.execute(qry)
+    new_partners = {}
+    for row in cr.fetchall():
+        model = row[0].replace('.','_')
+        name = row[1]
+        query = "select id,%s from  %s where %s not in (select id from res_partner)" %(name,model,name)
+        cr.execute(query)
+        for res in cr.fetchall():
+            if not new_partners.get(res[0]):
+                qr = "INSERT INTO res_partner (name,notification_email_send,company_id,create_date) values (%s,'%s',%s,'%s')" %(res[0],'comment',1,datetime.now())
+                cr.execute(qr)
+                cr.execute("select id from res_partner order by id desc limit 1")
+                new_partners[res[0]] = cr.fetchone()[0]
+            qr  = "UPDATE stock_move SET partner_id = %s WHERE partner_id = %s" %(new_partners.get(res[0]),res[0])
+            cr.execute(qr)
+
+    
+    #Template not exist so just set blank
+    qm = "update mail_compose_message set template_id = null , use_template = false  where template_id not in (select id from email_template)"
+    cr.execute(qm)
+                
 
 @openupgrade.migrate()
 def migrate(cr, version):
+    run_lovefurniture(cr)
     disable_demo_data(cr)
     update_base_sql(cr)
     openupgrade.update_module_names(
