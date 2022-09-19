@@ -403,9 +403,9 @@ class product_attribute_value(osv.osv):
             help="Price Extra: Extra price for the variant with this attribute value on sale price. eg. 200 price extra, 1000 + 200 = 1200."),
         'price_ids': fields.one2many('product.attribute.price', 'value_id', string='Attribute Prices', readonly=True),
     }
-    _sql_constraints = [
-        ('value_company_uniq', 'unique (name,attribute_id)', 'This attribute value already exists !')
-    ]
+    # _sql_constraints = [
+    #     ('value_company_uniq', 'unique (name,attribute_id)', 'This attribute value already exists !')
+    # ]
     _defaults = {
         'price_extra': 0.0,
     }
