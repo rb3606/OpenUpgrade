@@ -157,6 +157,10 @@ def propagate_currency_company(env):
         """,
     )
 
+def run_lovefurniture(cr):
+    cr.execute("update ir_values set value = 10  where name = 'taxes_id'")
+    cr.execute("update ir_values set value = 11  where name = 'supplier_taxes_id'")
+
 
 @openupgrade.migrate(use_env=True)
 def migrate(env, version):
@@ -170,6 +174,7 @@ def migrate(env, version):
     )
     openupgrade.copy_columns(cr, column_copies)
     openupgrade.rename_fields(env, field_renames, no_deep=True)
+    run_lovefurniture(cr)
     remove_obsolete(cr)
     pre_create_columns(cr)
     cleanup_modules(cr)
