@@ -1081,7 +1081,7 @@ def migrate(env, version):
     move_tags_from_taxes_to_repartition_lines(env)
     assign_tax_repartition_line_to_move_lines(env)
     assign_account_tags_to_move_lines(env)
-    compute_balance_for_draft_invoice_lines(env)
+    # compute_balance_for_draft_invoice_lines(env)
     _recompute_move_entries_totals(env)
     _empty_move_partner_field(env)
     openupgrade.load_data(
