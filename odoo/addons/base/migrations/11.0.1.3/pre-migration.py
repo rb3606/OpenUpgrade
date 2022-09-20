@@ -136,6 +136,10 @@ def rename_mass_mailing_event(env):
             [("mass_mailing_event", "mass_mailing_event_registration_exclude")],
             merge_modules=True)
 
+def run_lovefurniture(env):
+    openupgrade.logged_query(
+        env.cr,
+        "update crm_lead set create_uid = write_uid where create_uid is null")
 
 @openupgrade.migrate()
 def migrate(env, version):
@@ -185,3 +189,4 @@ def migrate(env, version):
     # Rename 'mass_mailing_event' module to not collide with the new
     # core module with the same name.
     rename_mass_mailing_event(env)
+    run_lovefurniture(env)
