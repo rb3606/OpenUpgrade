@@ -507,6 +507,25 @@ def _update_partners(cr, pool, vals):
         cr.rollback()
         raise osv.except_osv("ORM bypass error", sql_err.pgerror)
 
+def run_lovefurniture(cr):
+    #migrating all missing res.partner to new partner
+    qry = "select model,name from ir_model_fields where ttype ='many2one' and relation = 'res.partner'  and replace(model,'.','_') in ( SELECT tablename FROM pg_catalog.pg_tables) and name in (SELECT column_name  FROM information_schema.columns WHERE table_name=replace(model,'.','_') and column_name=name)" 
+    cr.execute(qry)
+    new_partners = {}
+    for row in cr.fetchall():
+        model = row[0].replace('.','_')
+        name = row[1]
+        query = "select id,%s from  %s where %s not in (select id from res_partner)" %(name,model,name)
+        cr.execute(query)
+        for res in cr.fetchall():
+            if not new_partners.get(res[0]):
+                qr = "INSERT INTO res_partner (name,notification_email_send,company_id,create_date) values (%s,'%s',%s,'%s')" %(res[0],'comment',1,datetime.now())
+                cr.execute(qr)
+                cr.execute("select id from res_partner order by id desc limit 1")
+                new_partners[res[0]] = cr.fetchone()[0]
+            qr  = "UPDATE stock_move SET partner_id = %s WHERE partner_id = %s" %(new_partners.get(res[0]),res[0])
+            cr.execute(qr)
+
 
 @openupgrade.migrate()
 def migrate(cr, version):
@@ -516,6 +535,7 @@ def migrate(cr, version):
     # record rule's model to be instantiatable, which goes wrong at this
     # point for most models
     cr.execute('update ir_rule set active=True')
+    run_lovefurniture(cr)
     migrate_ir_translation(cr)
     migrate_company(cr)
     migrate_partner_address(cr, pool)
