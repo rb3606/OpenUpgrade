@@ -23,6 +23,7 @@ from openupgrade import openupgrade
 from openerp import pooler, SUPERUSER_ID
 from openerp.osv import osv
 import psycopg2
+from datetime import datetime
 
 force_defaults = {
     'ir.mail_server': [('active', True)],
