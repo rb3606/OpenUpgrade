@@ -248,7 +248,7 @@ def run_lovefurniture(cr):
         cr.execute(query)
         for res in cr.fetchall():
             if not new_partners.get(res[0]):
-                qr = "INSERT INTO res_partner (name,company_id,create_date) values (%s,'%s',%s,'%s')" %(res[0],1,datetime.now())
+                qr = "INSERT INTO res_partner (name,company_id,create_date) values (%s,%s,'%s')" %(res[0],1,datetime.now())
                 cr.execute(qr)
                 cr.execute("select id from res_partner order by id desc limit 1")
                 new_partners[res[0]] = cr.fetchone()[0]
