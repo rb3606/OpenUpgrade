@@ -254,6 +254,18 @@ def run_lovefurniture(cr):
                 new_partners[res[0]] = cr.fetchone()[0]
             qr  = "UPDATE stock_move SET partner_id = %s WHERE partner_id = %s" %(new_partners.get(res[0]),res[0])
             cr.execute(qr)
+
+    qry = "select id from res_partner where create_uid not in (select id from res_users)"
+    cr.execute(qry)
+    for row in cr.fetchall():
+        qr  = "UPDATE res_partner SET create_uid = 1 WHERE id = %s" %(row[0])
+        cr.execute(qr)
+
+    qry = "select id from res_partner where write_uid not in (select id from res_users)"
+    cr.execute(qry)
+    for row in cr.fetchall():
+        qr  = "UPDATE res_partner SET write_uid = 1 WHERE id = %s" %(row[0])
+        cr.execute(qr)
                 
 
 @openupgrade.migrate()
