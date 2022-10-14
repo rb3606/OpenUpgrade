@@ -266,6 +266,18 @@ def run_lovefurniture(cr):
     for row in cr.fetchall():
         qr  = "UPDATE res_partner SET write_uid = 1 WHERE id = %s" %(row[0])
         cr.execute(qr)
+
+    qry = "select distinct res_id from mail_message where model='res.partner' and res_id  = 19892"
+    cr.execute(qry)
+    new_partners = {}
+    for row in cr.fetchall():
+        if not new_partners.get(res[0]):
+            qr = "INSERT INTO res_partner (name,company_id,create_date) values (%s,%s,'%s')" %(row[0],1,datetime.now())
+            cr.execute(qr)
+            cr.execute("select id from res_partner order by id desc limit 1")
+            new_partners[row[0]] = cr.fetchone()[0]
+        qr  = "UPDATE mail_message SET res_id = %s WHERE model = 'res.partner' and res_id = %s" %(new_partners.get(row[0]),row[0])
+        cr.execute(qr)
                 
 
 @openupgrade.migrate()
