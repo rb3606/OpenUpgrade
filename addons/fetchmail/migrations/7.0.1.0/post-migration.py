@@ -26,16 +26,27 @@ def move_fetchmail_server_id(cr):
     """
     Fetchmail now relates to mail.mail, not mail.message
     """
-    cr.execute(
-        "UPDATE mail_mail SET fetchmail_server_id = "
-        "       message.%(fetchmail_server_id)s "
-        "FROM mail_mail mail, mail_message message "
-        "WHERE mail.mail_message_id = message.id "
-        "      AND message.%(fetchmail_server_id)s IS NOT NULL" % {
-            'fetchmail_server_id': openupgrade.get_legacy_name(
-                'fetchmail_server_id'),
-            })
+    # cr.execute(
+    #     "UPDATE mail_mail SET fetchmail_server_id = "
+    #     "       message.%(fetchmail_server_id)s "
+    #     "FROM mail_mail mail, mail_message message "
+    #     "WHERE mail.mail_message_id = message.id "
+    #     "      AND message.%(fetchmail_server_id)s IS NOT NULL" % {
+    #         'fetchmail_server_id': openupgrade.get_legacy_name(
+    #             'fetchmail_server_id'),
+    #         })
 
+    qry = "select id,%(fetchmail_server_id)s from mail_message where %(fetchmail_server_id)s is not null" % {
+                                                            'fetchmail_server_id': openupgrade.get_legacy_name('fetchmail_server_id')}
+    cr.execute(qry)
+    results = cr.fetchall()
+    print(">>>>Total Mail message to process ",len(results))
+    cnt = 1
+    for row in results:
+        print(">>>>>>> Processing message %s" %(cnt))
+        qr  = "UPDATE mail_mail SET fetchmail_server_id = %s WHERE  mail_message_id= %s" %(row[1],row[0])
+        cr.execute(qr)
+        cnt +=1
 
 @openupgrade.migrate()
 def migrate(cr, version):
