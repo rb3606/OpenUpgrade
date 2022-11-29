@@ -92,7 +92,7 @@ def run_lovefurniture(env):
     """)
     for rule_id, wo_id,location_id in env.cr.fetchall():
         location = env['stock.location'].browse(location_id)
-        warehouse = env['stock.location'].browse(wo_id)        
+        warehouse = env['stock.warehouse'].browse(wo_id)        
         picking_type_id = False
         if location.action=='pull' and location.usage == 'customer':
             picking_type_id = warehouse.out_type_id.id
