@@ -322,6 +322,60 @@ def map_mrp_locations(env, main_company):
                                    xmlid_name=xmlid_name, condition=condition)
                 )
 
+def run_lovefurniture(env):
+    openupgrade.logged_query(env.cr, """
+    SELECT max(sequence)
+    FROM stock_picking_type  
+    """)
+    sequence = env.cr.fetchone()
+    
+    openupgrade.logged_query(env.cr, """
+    SELECT id
+    FROM stock_warehouse WHERE manu_type_id IS NULL 
+    """)
+    for wo_id in env.cr.fetchall():
+        warehouse = env['stock.warehouse'].browse(wo_id)   
+        manu_type = env['stock.picking.type'].create({
+                'name': 'Manufacturing',
+                'code': 'mrp_operation',
+                'use_create_lots': True,
+                'use_existing_lots': True,
+                'sequence': sequence[0] + 2,
+                'sequence_code': 'MO',
+                'company_id': warehouse.company_id.id,
+                'warehouse_id' : wo_id,
+                'default_location_src_id' : warehouse.lot_stock_id.id,
+                'default_location_dest_id' : warehouse.lot_stock_id.id,
+            })
+        warehouse.write({'manu_type_id' : manu_type.id})
+    
+    
+    # openupgrade.logged_query(env.cr, """
+    # SELECT id,warehouse_id,location_id
+    # FROM stock_rule WHERE picking_type_id IS NULL 
+    # """)
+    # print("its here for fill picking_type_id...... ")
+    # for rule_id, wo_id,location_id in env.cr.fetchall():
+    #     print("runnng premigration for stock rule1...",rule_id)
+    #     print("runnng premigration for stock rule2...",wo_id)
+    #     print("runnng premigration for stock rule3...",location_id)
+    #     location = env['stock.location'].browse(location_id)
+    #     warehouse = env['stock.warehouse'].browse(wo_id)        
+    #     picking_type_id = False
+    #     if location.action=='pull' and location.usage == 'customer':
+    #         picking_type_id = warehouse.out_type_id.id
+    #     if location.action=='pull' and location.usage == 'internal':
+    #         picking_type_id = warehouse.int_type_id.id
+    #     if location.action=='buy' and location.usage == 'internal':
+    #         picking_type_id = warehouse.in_type_id.id
+    #     print("runnng premigration for stock rule4...",picking_type_id)
+    #     if picking_type_id:
+    #         openupgrade.logged_query(
+    #             env.cr, """
+    #             UPDATE stock_rule SET picking_type_id = %s
+    #             WHERE id = %s """,
+    #             (picking_type_id, rule_id),
+    #         )
 
 @openupgrade.migrate()
 def migrate(env, version):
@@ -333,6 +387,7 @@ def migrate(env, version):
     fill_unbuild_company_id(env.cr)
     fill_stock_picking_type_sequence_code(env)
     handle_unbuild_sequence(env)
+    run_lovefurniture(env)
     fill_manufacture_mto_pull(env)
     fill_mrp_workorder_product_uom_id(env.cr)
     update_consumption(env)

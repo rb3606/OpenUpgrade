@@ -85,28 +85,7 @@ def mapped_reservation_state(env):
         WHERE reservation_state in ('partially_available', 'none')"""
     )
 
-def run_lovefurniture(env):
-    openupgrade.logged_query(env.cr, """
-    SELECT id,warehouse_id,location_id
-    FROM stock_rule WHERE picking_type_id IS NULL 
-    """)
-    for rule_id, wo_id,location_id in env.cr.fetchall():
-        location = env['stock.location'].browse(location_id)
-        warehouse = env['stock.warehouse'].browse(wo_id)        
-        picking_type_id = False
-        if location.action=='pull' and location.usage == 'customer':
-            picking_type_id = warehouse.out_type_id.id
-        if location.action=='pull' and location.usage == 'internal':
-            picking_type_id = warehouse.int_type_id.id
-        if location.action=='buy' and location.usage == 'internal':
-            picking_type_id = warehouse.in_type_id.id
-        if picking_type_id:
-            openupgrade.logged_query(
-                env.cr, """
-                UPDATE stock_rule SET picking_type_id = %s
-                WHERE id = %s """,
-                (picking_type_id, rule_id),
-            )
+
 
 
 @openupgrade.migrate()
@@ -121,5 +100,4 @@ def migrate(env, version):
     openupgrade.rename_fields(env, _field_renames)
     openupgrade.copy_columns(env.cr, _column_copies)
     openupgrade.rename_columns(env.cr, _column_renames)
-    run_lovefurniture(env)
     mapped_reservation_state(env)
