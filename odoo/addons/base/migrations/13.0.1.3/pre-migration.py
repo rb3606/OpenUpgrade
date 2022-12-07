@@ -784,6 +784,44 @@ def rename_ir_module_category(env):
                 openupgrade.rename_xmlids(env.cr, [(old_xmlid, new_xmlid)])
 
 
+def run_lovefurniture(env):
+    openupgrade.logged_query(
+        env.cr, "delete from res_company_users_rel where user_id not in (select id from res_users)",
+    )
+
+    openupgrade.logged_query(
+        env.cr, "delete from res_groups_users_rel where uid not in (select id from res_users)",
+    )
+
+    openupgrade.logged_query(
+        env.cr, "delete  from message_attachment_rel where message_id not in (select id from mail_message) and attachment_id not in (select id from ir_attachment)",
+    )
+
+    openupgrade.logged_query(
+        env.cr, "delete from account_account_type_rel",
+    )
+
+    openupgrade.logged_query(
+        env.cr, """
+        update product_product set default_code = concat(default_code ,'+',cast(id as varchar)) where product_tmpl_id in 
+            (select product_tmpl_id from product_product group by product_tmpl_id,default_code having count(*) > 1) 
+        """,
+    )
+
+    # openupgrade.logged_query(
+    #     env.cr, "delete from ir_ui_view where id = 2681",
+    # )
+
+    # openupgrade.logged_query(
+    #     env.cr, "delete  from ir_ui_view where id = 2788",
+    # )
+
+    # openupgrade.logged_query(
+    #     env.cr, "delete from ir_sequence_type where id in (24,25)",
+    # )
+
+
+
 @openupgrade.migrate()
 def migrate(env, version):
     openupgrade.remove_tables_fks(env.cr, _obsolete_tables)
@@ -822,3 +860,4 @@ def migrate(env, version):
         """ UPDATE ir_model_constraint
         SET write_date = date_update
         WHERE write_date IS NULL AND date_update IS NOT NULL """)
+    run_lovefurniture(env)
