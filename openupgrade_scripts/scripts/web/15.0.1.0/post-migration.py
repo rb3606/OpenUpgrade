@@ -22,9 +22,22 @@ def migrate(env, version):
     """  # noqa: B950
     for company in env["res.company"].search([]):
         wizard = env["base.document.layout"].with_company(company).create({})
-        report_footer = wizard.report_footer
+        # We define what the footer should have as it had v14
+        # https://github.com/odoo/odoo/blob/cc0060e889603eb2e47fa44a8a22a70d7d784185/addons/web/views/report_templates.xml#L362  # noqa: B950
+        report_footer = '<ul class="list-inline">'
+        if company.phone:
+            report_footer += f'<li class="list-inline-item"><i class="fa fa-phone" role="img"/> <span class="o_force_ltr">{company.phone}</span></li>'  # noqa: B950
+        if company.email:
+            report_footer += f'<li class="list-inline-item"><i class="fa fa-at" role="img"/> <span>{company.email}</span></li>'  # noqa: B950
+        if company.website:
+            report_footer += f'<li class="list-inline-item"><i class="fa fa-globe" role="img"/> <span>{company.website}</span></li>'  # noqa: B950
+        if company.vat:
+            vat_label = company.country_id.vat_label or "Tax ID"
+            report_footer += f'<li class="list-inline-item"><i class="fa fa-building-o" role="img"/>{vat_label}: <span>{company.vat}</span></li>'  # noqa: B950
+        report_footer = "</ul>"
+        # Add the extra text (if any) with a separating line
         if company.report_footer:
-            report_footer += company.report_footer
+            report_footer += "<hr>" + company.report_footer
         company.write(
             {
                 "report_footer": report_footer,
