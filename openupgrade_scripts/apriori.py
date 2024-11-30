@@ -75,6 +75,8 @@ merged_modules = {
     "hr_attendance_user_list": "hr_attendance",
     # OCA/l10n-germany
     "l10n_de_steuernummer": "base_vat",
+    # OCA/l10n-spain
+    "l10n_es_extra_data": "l10n_es",
     # OCA/manufacture
     "mrp_subcontracting_resupply_link": "mrp_subcontracting_purchase",
     # OCA/pos
